@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>200 mL Freezing Point Lab Game</title>
+  <style>
+    :root {
+      --bg: #0b1320;
+      --panel: #132035;
+      --panel-2: #192a45;
+      --text: #eef6ff;
+      --muted: #9bb3cf;
+      --accent: #38bdf8;
+      --ice: #93c5fd;
+      --salt: #fbbf24;
+      --ok: #34d399;
+      --warn: #fb7185;
+      --border: rgba(255, 255, 255, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #172844, var(--bg) 65%);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      max-width: 960px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.7rem;
+      letter-spacing: 0.3px;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 980px;
+      align-items: start;
+    }
+
+    @media (max-width: 820px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .canvas-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    canvas {
+      background: linear-gradient(180deg, rgba(15, 26, 46, 0.9), rgba(9, 16, 30, 0.96));
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: block;
+    }
+
+    .status-banner {
+      margin-top: 12px;
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.92rem;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    .badge.liquid {
+      background: rgba(56, 189, 248, 0.18);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    .badge.frozen {
+      background: rgba(147, 197, 253, 0.22);
+      color: #dbeafe;
+      border: 1px solid rgba(147, 197, 253, 0.55);
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin: 0 0 10px;
+    }
+
+    .salt-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    button.salt-btn {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 6px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+
+    button.salt-btn:hover {
+      background: #233a5e;
+      border-color: var(--salt);
+      transform: translateY(-1px);
+    }
+
+    button.salt-btn:active {
+      transform: translateY(1px);
+    }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    button.action-btn {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #1d3252;
+      color: var(--text);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button.action-btn.primary {
+      background: #0284c7;
+      border-color: #38bdf8;
+    }
+
+    button.action-btn:hover {
+      filter: brightness(1.1);
+    }
+
+    .slider-box {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 18px;
+    }
+
+    .temp-readout {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+
+    .temp-val {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+      height: 8px;
+    }
+
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat-box {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .stat-value {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .challenge-box {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .challenge-msg {
+      margin: 6px 0 10px;
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .log-list {
+      margin: 10px 0 0;
+      padding-left: 18px;
+      font-size: 0.86rem;
+      color: var(--muted);
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .ok-text { color: var(--ok); font-weight: 700; }
+    .warn-text { color: var(--warn); font-weight: 700; }
+    .legend {
+      display: flex;
+      gap: 16px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>200 mL Water Freezing Point Game</h1>
+    <p class="subtitle">Volume is fixed at <strong>200 mL</strong>. Add only salt (<strong>0g, 1g, 5g, 10g, 20g</strong>) and slide temperature between <strong>-10°C</strong> and <strong>5°C</strong> to find each freezing point.</p>
+  </header>
+
+  <div class="game-layout">
+    <div class="card canvas-wrap">
+      <canvas id="simCanvas" width="340" height="390"></canvas>
+      <div class="legend">
+        <span><i class="dot" style="background:#38bdf8;"></i>Water molecule</span>
+        <span><i class="dot" style="background:#fbbf24;"></i>Salt ion (Na⁺/Cl⁻)</span>
+      </div>
+      <div class="status-banner">
+        <span>State: <strong id="stateText">Liquid</strong></span>
+        <span id="stateBadge" class="badge liquid">Liquid</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="section-title">Add Salt Only (200 mL Water)</p>
+      <div class="salt-grid">
+        <button class="salt-btn" data-salt="0">+0g</button>
+        <button class="salt-btn" data-salt="1">+1g</button>
+        <button class="salt-btn" data-salt="5">+5g</button>
+        <button class="salt-btn" data-salt="10">+10g</button>
+        <button class="salt-btn" data-salt="20">+20g</button>
+      </div>
+
+      <div class="action-row">
+        <button id="resetBeakerBtn" class="action-btn">Reset Beaker (0g Salt, 200 mL)</button>
+        <button id="lockGuessBtn" class="action-btn primary">Log Freezing Point</button>
+      </div>
+
+      <div class="slider-box">
+        <div class="temp-readout">
+          <span class="section-title" style="margin:0;">Temperature Control</span>
+          <span id="tempReadout" class="temp-val">2.0°C</span>
+        </div>
+        <input id="tempSlider" type="range" min="-10" max="5" step="0.1" value="2.0" />
+        <div class="range-labels">
+          <span>-10.0°C</span>
+          <span>0.0°C</span>
+          <span>5.0°C</span>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">Water Volume</div>
+          <div class="stat-value">200 mL</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Total Salt Added</div>
+          <div id="saltTotalEl" class="stat-value" style="color:var(--salt);">0 g</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Solute Molality</div>
+          <div id="molalityEl" class="stat-value">0.000 m</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Found Freezing Points</div>
+          <div id="foundCountEl" class="stat-value">0 / 5</div>
+        </div>
+      </div>
+
+      <div class="challenge-box">
+        <p class="section-title" style="margin:0; color:#6ee7b7;">Freezing Point Hunt</p>
+        <p id="challengeMsg" class="challenge-msg">
+          Cool the water until it transitions from <strong>Liquid</strong> to <strong>Frozen</strong>, then click <strong>Log Freezing Point</strong> right at the threshold!
+        </p>
+        <ul id="logList" class="log-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("simCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const tempSlider = document.getElementById("tempSlider");
+    const tempReadout = document.getElementById("tempReadout");
+    const saltTotalEl = document.getElementById("saltTotalEl");
+    const molalityEl = document.getElementById("molalityEl");
+    const foundCountEl = document.getElementById("foundCountEl");
+    const stateText = document.getElementById("stateText");
+    const stateBadge = document.getElementById("stateBadge");
+    const challengeMsg = document.getElementById("challengeMsg");
+    const logList = document.getElementById("logList");
+    const lockGuessBtn = document.getElementById("lockGuessBtn");
+    const resetBeakerBtn = document.getElementById("resetBeakerBtn");
+
+// Beaker geometry (200 mL fixed volume)
+const beaker = {
+x: 65,
+y: 75,
+width: 210,
+height: 275,
+liquidHeight: 165
+};
+const MOLAR_MASS_NACL = 58.443; // g/mol
+const KF = 1.86; // °C·kg/mol
+const VAN_T_HOFF = 1.85; // effective dissociation factor in aqueous NaCl
+const WATER_MASS_KG = 0.200; // 200 mL ≈ 0.200 kg
+let saltGrams = 0;
+let tempC = parseFloat(tempSlider.value);
+const discovered = new Map(); // saltGrams -> logged temp
+function getFreezingPoint(grams) {
+if (grams <= 0) return 0.0;
+const molality = (grams / MOLAR_MASS_NACL) / WATER_MASS_KG;
+return Number((-VAN_T_HOFF * KF * molality).toFixed(1));
+}
+function getMolality(grams) {
+return (grams / MOLAR_MASS_NACL) / WATER_MASS_KG;
+}
+function isFrozen() {
+return tempC <= getFreezingPoint(saltGrams);
+}
+// Create water particles inside the 200 mL liquid region
+const NUM_WATER = 110;
+const waterParticles = [];
+const saltParticles = [];
+function randomInLiquid(radius) {
+const topY = beaker.y + beaker.height - beaker.liquidHeight;
+return {
+x: beaker.x + 8 + radius + Math.random() * (beaker.width - 16 - radius * 2),
+y: topY + 6 + radius + Math.random() * (beaker.liquidHeight - 10 - radius * 2)
+};
+}
+for (let i = 0; i < NUM_WATER; i++) {
+const pos = randomInLiquid(4.5);
+waterParticles.push({
+x: pos.x,
+y: pos.y,
+vx: (Math.random() - 0.5) * 1.4,
+vy: (Math.random() - 0.5) * 1.4,
+r: 4.5,
+anchorX: pos.x,
+anchorY: pos.y
+});
+}
+function syncSaltParticles() {
+// 1 salt particle per gram of salt for clear visual scaling (max 20)
+const targetCount = saltGrams;
+while (saltParticles.length < targetCount) {
+const pos = randomInLiquid(3.8);
+saltParticles.push({
+x: pos.x,
+y: pos.y,
+vx: (Math.random() - 0.5) * 1.6,
+vy: (Math.random() - 0.5) * 1.6,
+r: 3.8
+});
+}
+while (saltParticles.length > targetCount) {
+saltParticles.pop();
+}
+}
+function updateUI() {
+tempReadout.textContent = ${tempC.toFixed(1)}°C;
+tempReadout.style.color = tempC <= 0 ? "#7dd3fc" : "#fca5a5";
+saltTotalEl.textContent = ${saltGrams} g;
+molalityEl.textContent = ${getMolality(saltGrams).toFixed(3)} m;
+foundCountEl.textContent = ${discovered.size} / 5;
+const frozen = isFrozen();
+stateText.textContent = frozen ? "Frozen (Ice + Brine)" : "Liquid";
+stateBadge.textContent = frozen ? "Frozen" : "Liquid";
+stateBadge.className = badge ${frozen ? "frozen" : "liquid"};
+}
+function addSalt(grams) {
+saltGrams += grams;
+syncSaltParticles();
+updateUI();
+}
+function resetBeaker() {
+saltGrams = 0;
+tempC = 2.0;
+tempSlider.value = "2.0";
+syncSaltParticles();
+updateUI();
+}
+document.querySelectorAll(".salt-btn").forEach((btn) => {
+btn.addEventListener("click", () => {
+addSalt(Number(btn.dataset.salt));
+});
+});
+resetBeakerBtn.addEventListener("click", resetBeaker);
+tempSlider.addEventListener("input", (e) => {
+tempC = parseFloat(e.target.value);
+updateUI();
+});
+lockGuessBtn.addEventListener("click", () => {
+const fp = getFreezingPoint(saltGrams);
+const diff = Math.abs(tempC - fp);
+if (diff <= 0.3) {
+discovered.set(saltGrams, tempC);
+challengeMsg.innerHTML = <span class="ok-text">Logged ${tempC.toFixed(1)}°C for ${saltGrams}g salt!</span> True freezing point is around <strong>${fp.toFixed(1)}°C</strong>.;
+const item = document.createElement("li");
+item.textContent = ${saltGrams}g salt in 200 mL → ${tempC.toFixed(1)}°C (target ~${fp.toFixed(1)}°C);
+logList.prepend(item);
+} else if (tempC > fp) {
+challengeMsg.innerHTML = <span class="warn-text">Too warm (${tempC.toFixed(1)}°C)!</span> The 200 mL sample is still liquid at this salt level. Cool it down further.;
+} else {
+challengeMsg.innerHTML = <span class="warn-text">Already past freezing (${tempC.toFixed(1)}°C)!</span> Warm the slider up slowly toward where it first freezes.;
+}
+updateUI();
+});
+function stepParticles() {
+const frozen = isFrozen();
+const topY = beaker.y + beaker.height - beaker.liquidHeight;
+const bottomY = beaker.y + beaker.height - 4;
+const leftX = beaker.x + 4;
+const rightX = beaker.x + beaker.width - 4;
+// Thermal motion scales with temperature above -10°C
+const speedFactor = frozen ? 0.12 : Math.max(0.35, (tempC + 11) / 8);
+for (const p of waterParticles) {
+if (frozen) {
+// Gentle lattice vibration in solid ice
+p.vx = (Math.random() - 0.5) * 0.25;
+p.vy = (Math.random() - 0.5) * 0.25;
+p.x += p.vx;
+p.y += p.vy;
+p.x += (p.anchorX - p.x) * 0.08;
+p.y += (p.anchorY - p.y) * 0.08;
+} else {
+p.vx += (Math.random() - 0.5) * 0.35 * speedFactor;
+p.vy += (Math.random() - 0.5) * 0.35 * speedFactor + 0.02;
+p.vx *= 0.94;
+p.vy *= 0.94;
+p.x += p.vx;
+p.y += p.vy;
+p.anchorX += (p.x - p.anchorX) * 0.04;
+p.anchorY += (p.y - p.anchorY) * 0.04;
+}
+// Keep particles inside container liquid volume
+if (p.x - p.r < leftX) { p.x = leftX + p.r; p.vx = Math.abs(p.vx); }
+if (p.x + p.r > rightX) { p.x = rightX - p.r; p.vx = -Math.abs(p.vx); }
+if (p.y - p.r < topY) { p.y = topY + p.r; p.vy = Math.abs(p.vy); }
+if (p.y + p.r > bottomY) { p.y = bottomY - p.r; p.vy = -Math.abs(p.vy); }
+}
+for (const s of saltParticles) {
+const sSpeed = frozen ? 0.25 : speedFactor * 1.15;
+s.vx += (Math.random() - 0.5) * 0.45 * sSpeed;
+s.vy += (Math.random() - 0.5) * 0.45 * sSpeed;
+s.vx *= 0.93;
+s.vy *= 0.93;
+s.x += s.vx;
+s.y += s.vy;
+if (s.x - s.r < leftX) { s.x = leftX + s.r; s.vx = Math.abs(s.vx); }
+if (s.x + s.r > rightX) { s.x = rightX - s.r; s.vx = -Math.abs(s.vx); }
+if (s.y - s.r < topY) { s.y = topY + s.r; s.vy = Math.abs(s.vy); }
+if (s.y + s.r > bottomY) { s.y = bottomY - s.r; s.vy = -Math.abs(s.vy); }
+}
+}
+function draw() {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+const frozen = isFrozen();
+const topY = beaker.y + beaker.height - beaker.liquidHeight;
+// Liquid / Ice fill conforming to container
+const grad = ctx.createLinearGradient(0, topY, 0, beaker.y + beaker.height);
+if (frozen) {
+grad.addColorStop(0, "rgba(186, 230, 253, 0.36)");
+grad.addColorStop(1, "rgba(125, 211, 252, 0.24)");
+} else {
+grad.addColorStop(0, "rgba(56, 189, 248, 0.22)");
+grad.addColorStop(1, "rgba(2, 132, 199, 0.34)");
+}
+ctx.fillStyle = grad;
+ctx.fillRect(beaker.x + 2, topY, beaker.width - 4, beaker.liquidHeight - 2);
+// Meniscus / surface line
+ctx.strokeStyle = frozen ? "#e0f2fe" : "#7dd3fc";
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(beaker.x + 2, topY);
+ctx.lineTo(beaker.x + beaker.width - 2, topY);
+ctx.stroke();
+// Volume tick marks (200 mL mark at liquid top)
+ctx.fillStyle = "#94a3b8";
+ctx.font = "11px sans-serif";
+ctx.textAlign = "left";
+ctx.fillText("200 mL", beaker.x + beaker.width + 8, topY + 4);
+ctx.fillText("100 mL", beaker.x + beaker.width + 8, beaker.y + beaker.height - beaker.liquidHeight * 0.5 + 4);
+// Draw water particles
+for (const p of waterParticles) {
+ctx.beginPath();
+ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+ctx.fillStyle = frozen ? "#bae6fd" : "#38bdf8";
+ctx.fill();
+}
+// Draw salt particles
+for (const s of saltParticles) {
+ctx.beginPath();
+ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+ctx.fillStyle = "#fbbf24";
+ctx.fill();
+}
+// Beaker glass outline
+ctx.strokeStyle = "#cbd5e1";
+ctx.lineWidth = 3;
+ctx.beginPath();
+ctx.moveTo(beaker.x, beaker.y);
+ctx.lineTo(beaker.x, beaker.y + beaker.height);
+ctx.lineTo(beaker.x + beaker.width, beaker.y + beaker.height);
+ctx.lineTo(beaker.x + beaker.width, beaker.y);
+ctx.stroke();
+// Top readout overlay
+ctx.fillStyle = "#e2e8f0";
+ctx.font = "bold 13px sans-serif";
+ctx.fillText(Water: 200 mL  |  Salt: ${saltGrams}g  |  Temp: ${tempC.toFixed(1)}°C, 16, 28);
+}
+function loop() {
+stepParticles();
+draw();
+requestAnimationFrame(loop);
+}
+updateUI();
+loop();
+
+
+
+### How to Play
+1. **Add Salt:** Click **`+0g`**, **`+1g`**, **`+5g`**, **`+10g`**, or **`+20g`** to add salt to the **200 mL** water sample.
+2. **Adjust Temperature:** Slide between **`-10.0°C`** and **`5.0°C`** and watch the water and salt particles move inside the container—slowing into a solid-like lattice when cooled below that salt concentration's freezing point.
+3. **Log the Freezing Point:** Cool down until the state switches to **Frozen**, then click **Log Freezing Point** near the transition temperature to record your finding.
